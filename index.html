@@ -116,6 +116,10 @@
                         <i class="fas fa-piggy-bank"></i>
                         <span>Вклады</span>
                     </div>
+                    <div class="nav-item" data-tab="analytics">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Аналитика</span>
+                    </div>
                     <div class="nav-item" data-tab="coffee">
                         <i class="fas fa-coffee"></i>
                         <span>Кофе</span>
@@ -288,6 +292,54 @@
                     </div>
                 </div>
 
+                <!-- Аналитика -->
+                <div id="analytics-tab" class="tab-content">
+                    <div class="analytics-section">
+                        <div class="analytics-summary">
+                            <div class="analytics-summary-card">
+                                <span class="summary-label">Траты за месяц</span>
+                                <span class="summary-value" id="analytics-total-spent">0 BYN</span>
+                                <span class="summary-meta">Бюджет: <span id="analytics-budget">0 BYN</span></span>
+                            </div>
+                            <div class="analytics-summary-card">
+                                <span class="summary-label">Экономия</span>
+                                <span class="summary-value" id="analytics-savings-rate">0%</span>
+                                <span class="summary-meta">Отложено: <span id="analytics-savings-amount">0 BYN</span></span>
+                            </div>
+                            <div class="analytics-summary-card">
+                                <span class="summary-label">Активных подписок</span>
+                                <span class="summary-value" id="analytics-active-subscriptions">0</span>
+                                <span class="summary-meta">Сумма в месяц: <span id="analytics-subscription-total">0 BYN</span></span>
+                            </div>
+                        </div>
+
+                        <div class="analytics-content">
+                            <div class="analytics-card">
+                                <div class="analytics-card__header">
+                                    <h3>Структура трат</h3>
+                                    <span class="analytics-caption">за последние 30 дней</span>
+                                </div>
+                                <div id="analytics-category-chart" class="category-chart"></div>
+                            </div>
+
+                            <div class="analytics-card">
+                                <div class="analytics-card__header">
+                                    <h3>Динамика по неделям</h3>
+                                    <span class="analytics-caption">Сравнение с прошлым месяцем</span>
+                                </div>
+                                <div id="analytics-weekly-trend" class="trend-chart"></div>
+                            </div>
+
+                            <div class="analytics-sidecard">
+                                <h4>Подписки и сервисы</h4>
+                                <div id="analytics-subscriptions" class="subscription-list"></div>
+                                <h4>Что можно улучшить</h4>
+                                <ul id="analytics-recommendations" class="recommend-list"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Кофе -->
                 <div id="coffee-tab" class="tab-content">
                     <div class="coffee-section">
@@ -361,23 +413,23 @@
                             <div class="rewards-list">
                                 <div class="reward-item">
                                     <span class="reward-days">7 дней</span>
-                                    <span class="reward-text">+20% кешбэк на все покупки</span>
+                                    <span class="reward-text">+2% кешбэк на все покупки</span>
                                 </div>
                                 <div class="reward-item">
                                     <span class="reward-days">14 дней</span>
-                                    <span class="reward-text">+50% кешбэк на все покупки</span>
+                                    <span class="reward-text">+5% кешбэк на все покупки</span>
                                 </div>
                                 <div class="reward-item">
                                     <span class="reward-days">30 дней</span>
-                                    <span class="reward-text">+100% кешбэк + скидки в партнерских магазинах</span>
+                                    <span class="reward-text">+10% кешбэк + скидки в партнерских магазинах</span>
                                 </div>
                                 <div class="reward-item">
                                     <span class="reward-days">100 дней</span>
-                                    <span class="reward-text">+200% кешбэк + эксклюзивные предложения</span>
+                                    <span class="reward-text">+20% кешбэк + эксклюзивные предложения</span>
                                 </div>
                                 <div class="reward-item">
                                     <span class="reward-days">365 дней</span>
-                                    <span class="reward-text">+500% кешбэк + выбор подарка от МТБанка</span>
+                                    <span class="reward-text">+50% кешбэк + выбор подарка от МТБанка</span>
                                 </div>
                             </div>
                         </div>
