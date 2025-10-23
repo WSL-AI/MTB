@@ -310,7 +310,7 @@ body {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 20px;
     margin-bottom: 40px;
-    max-width: 800px;
+    max-width: 900px;
     margin-left: auto;
     margin-right: auto;
 }
@@ -2542,3 +2542,4 @@ body {
 .mt-20 {
     margin-top: 20px;
 }
+
