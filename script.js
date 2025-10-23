@@ -52,6 +52,35 @@ let userData = {
             replenishment: false
         }
     ],
+    analytics: {
+        budget: 1800,
+        totalSpent: 1425,
+        savingsAmount: 375,
+        savingsRate: 21,
+        categories: [
+            { id: 'food', name: 'Продукты', amount: 420, percent: 29, color: '#2563eb' },
+            { id: 'transport', name: 'Транспорт', amount: 180, percent: 13, color: '#f97316' },
+            { id: 'entertainment', name: 'Развлечения', amount: 240, percent: 17, color: '#10b981' },
+            { id: 'shopping', name: 'Шопинг', amount: 310, percent: 22, color: '#8b5cf6' },
+            { id: 'other', name: 'Другое', amount: 275, percent: 19, color: '#64748b' }
+        ],
+        weeklyTrend: [
+            { week: '1-7', current: 320, previous: 280 },
+            { week: '8-14', current: 360, previous: 310 },
+            { week: '15-21', current: 295, previous: 330 },
+            { week: '22-28', current: 450, previous: 390 }
+        ],
+        subscriptions: [
+            { name: 'Видеосервис', amount: 12.99, renewal: '15 числа' },
+            { name: 'Музыка', amount: 7.49, renewal: '2 числа' },
+            { name: 'Спортзал', amount: 35.00, renewal: '25 числа' }
+        ],
+        recommendations: [
+            'Попробуйте устанавливать недельные лимиты на доставку еды, чтобы удерживать план расходов.',
+            'Добавьте автоматическое пополнение вклада при каждом поступлении зарплаты.',
+            'Пересмотрите подписку на спортзал — при оплате на год вперед стоимость снизится на 15%.'
+        ]
+    },
     streak: 0,
     achievements: [],
     cardColor: '#6366f1',
@@ -325,6 +354,8 @@ function switchTab(tabName) {
         updateCardPreview();
     } else if (tabName === 'deposits') {
         updateDepositsView();
+    } else if (tabName === 'analytics') {
+        updateAnalyticsView();
     }
 }
 
@@ -367,6 +398,9 @@ function updateUserInterface() {
 
     // Обновляем вкладки с вкладами
     updateDepositsView();
+
+    // Обновляем аналитику
+    updateAnalyticsView();
 }
 
 function formatCurrency(value, fractionDigits = 2) {
@@ -547,6 +581,117 @@ function updateDepositsView() {
         }
     }
 }
+
+function updateAnalyticsView() {
+    const analytics = userData.analytics;
+    const totalEl = document.getElementById('analytics-total-spent');
+    if (!totalEl || !analytics) return;
+
+    totalEl.textContent = `${formatCurrency(analytics.totalSpent)} BYN`;
+
+    const budgetEl = document.getElementById('analytics-budget');
+    if (budgetEl) {
+        budgetEl.textContent = `${formatCurrency(analytics.budget)} BYN`;
+    }
+
+    const savingsRateEl = document.getElementById('analytics-savings-rate');
+    if (savingsRateEl) {
+        savingsRateEl.textContent = `${analytics.savingsRate}%`;
+    }
+
+    const savingsAmountEl = document.getElementById('analytics-savings-amount');
+    if (savingsAmountEl) {
+        savingsAmountEl.textContent = `${formatCurrency(analytics.savingsAmount)} BYN`;
+    }
+
+    const activeSubsEl = document.getElementById('analytics-active-subscriptions');
+    if (activeSubsEl) {
+        activeSubsEl.textContent = analytics.subscriptions.length;
+    }
+
+    const subsTotalEl = document.getElementById('analytics-subscription-total');
+    if (subsTotalEl) {
+        const totalSubs = analytics.subscriptions.reduce((sum, sub) => sum + sub.amount, 0);
+        subsTotalEl.textContent = `${formatCurrency(totalSubs)} BYN`;
+    }
+
+    const categoryChartEl = document.getElementById('analytics-category-chart');
+    if (categoryChartEl) {
+        categoryChartEl.innerHTML = '';
+        analytics.categories.forEach(category => {
+            const row = document.createElement('div');
+            row.className = 'category-chart__row';
+            row.innerHTML = `
+                <div class="category-chart__label">
+                    <span class="category-name">${category.name}</span>
+                    <span class="category-amount">${formatCurrency(category.amount)} BYN</span>
+                </div>
+                <div class="category-chart__bar">
+                    <div class="category-chart__fill" style="width: ${category.percent}%; background: ${category.color};"></div>
+                </div>
+                <span class="category-chart__percent">${category.percent}%</span>
+            `;
+            categoryChartEl.appendChild(row);
+        });
+    }
+
+    const trendChartEl = document.getElementById('analytics-weekly-trend');
+    if (trendChartEl) {
+        trendChartEl.innerHTML = '';
+        const maxValue = analytics.weeklyTrend.reduce((max, point) => {
+            return Math.max(max, point.current, point.previous);
+        }, 0);
+
+        analytics.weeklyTrend.forEach(point => {
+            const currentWidth = maxValue ? Math.round((point.current / maxValue) * 100) : 0;
+            const previousWidth = maxValue ? Math.round((point.previous / maxValue) * 100) : 0;
+            const row = document.createElement('div');
+            row.className = 'trend-row';
+            row.innerHTML = `
+                <div class="trend-week">${point.week}</div>
+                <div class="trend-bars">
+                    <div class="trend-bar current" style="width: ${currentWidth}%">
+                        <span class="trend-bar__amount">${formatCurrency(point.current)} BYN</span>
+                        <span class="trend-bar__label">текущий месяц</span>
+                    </div>
+                    <div class="trend-bar previous" style="width: ${previousWidth}%">
+                        <span class="trend-bar__amount">${formatCurrency(point.previous)} BYN</span>
+                        <span class="trend-bar__label">прошлый месяц</span>
+                    </div>
+                </div>
+            `;
+            trendChartEl.appendChild(row);
+        });
+    }
+
+    const subsListEl = document.getElementById('analytics-subscriptions');
+    if (subsListEl) {
+        subsListEl.innerHTML = '';
+        analytics.subscriptions.forEach(sub => {
+            const item = document.createElement('div');
+            item.className = 'subscription-item';
+            item.innerHTML = `
+                <div>
+                    <span class="subscription-name">${sub.name}</span>
+                    <span class="subscription-renewal">Списание ${sub.renewal}</span>
+                </div>
+                <div class="subscription-amount">${formatCurrency(sub.amount)} BYN</div>
+            `;
+            subsListEl.appendChild(item);
+        });
+    }
+
+    const recommendationsEl = document.getElementById('analytics-recommendations');
+    if (recommendationsEl) {
+        recommendationsEl.innerHTML = '';
+        analytics.recommendations.forEach(text => {
+            const li = document.createElement('li');
+            li.textContent = text;
+            recommendationsEl.appendChild(li);
+        });
+    }
+}
+
 function buyCoffee() {
     const coffeePrice = 3;
     
@@ -1255,11 +1400,11 @@ function checkStreak() {
 
 function updateStreakRewards() {
     const streakRewards = {
-        7: { bonus: 1.2, message: 'Неделя страйка! +20% кешбэк' },
-        14: { bonus: 1.5, message: 'Две недели! +50% кешбэк' },
-        30: { bonus: 2.0, message: 'Месяц страйка! +100% кешбэк' },
-        100: { bonus: 3.0, message: '100 дней! +200% кешбэк' },
-        365: { bonus: 5.0, message: 'Год страйка! Выберите подарок!' }
+        7: { bonus: 1.02, message: 'Неделя страйка! +2% кешбэк' },
+        14: { bonus: 1.05, message: 'Две недели! +5% кешбэк' },
+        30: { bonus: 1.1, message: 'Месяц страйка! +10% кешбэк' },
+        100: { bonus: 1.2, message: '100 дней! +20% кешбэк' },
+        365: { bonus: 1.5, message: 'Год страйка! +50% кешбэк и подарок!' }
     };
     
     for (const [days, reward] of Object.entries(streakRewards)) {
