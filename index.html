@@ -10,7 +10,28 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
 </head>
-<body>
+<body class="theme-ocean">
+    <div class="theme-switcher">
+        <div class="theme-switcher__panel">
+            <span class="theme-switcher__label">Тема:</span>
+            <button type="button" class="theme-option active" data-theme="ocean" aria-pressed="true">
+                <span class="theme-swatch"></span>
+                <span>Океан</span>
+            </button>
+            <button type="button" class="theme-option" data-theme="forest" aria-pressed="false">
+                <span class="theme-swatch"></span>
+                <span>Лес</span>
+            </button>
+            <button type="button" class="theme-option" data-theme="sunset" aria-pressed="false">
+                <span class="theme-swatch"></span>
+                <span>Закат</span>
+            </button>
+            <button type="button" class="theme-option" data-theme="berry" aria-pressed="false">
+                <span class="theme-swatch"></span>
+                <span>Ягоды</span>
+            </button>
+        </div>
+    </div>
     <div id="app">
         <!-- Начальный экран выбора категорий -->
         <div id="welcome-screen" class="screen active">
@@ -91,6 +112,10 @@
                         <i class="fas fa-credit-card"></i>
                         <span>Карта</span>
                     </div>
+                    <div class="nav-item" data-tab="deposits">
+                        <i class="fas fa-piggy-bank"></i>
+                        <span>Вклады</span>
+                    </div>
                     <div class="nav-item" data-tab="coffee">
                         <i class="fas fa-coffee"></i>
                         <span>Кофе</span>
@@ -165,6 +190,10 @@
                             <i class="fas fa-coffee"></i>
                             <span>Купить кофе</span>
                         </button>
+                        <button class="action-btn" id="simulate-transaction-btn">
+                            <i class="fas fa-exchange-alt"></i>
+                            <span>Совершить транзакцию</span>
+                        </button>
                     </div>
                 </div>
 
@@ -207,6 +236,54 @@
                                     <div class="color-option" data-color="#8b5cf6"></div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Вклады -->
+                <div id="deposits-tab" class="tab-content">
+                    <div class="deposits-section">
+                        <div class="deposits-summary-grid">
+                            <div class="deposit-summary-card">
+                                <span class="summary-label">Всего на вкладах</span>
+                                <span class="summary-value" id="deposits-total">0 BYN</span>
+                                <span class="summary-meta">В этом месяце начислится <span id="deposits-monthly-income">0 BYN</span></span>
+                            </div>
+                            <div class="deposit-summary-card">
+                                <span class="summary-label">Средняя ставка</span>
+                                <span class="summary-value" id="deposits-average-rate">0%</span>
+                                <span class="summary-meta">Начислено процентов: <span id="deposits-interest-earned">0 BYN</span></span>
+                            </div>
+                            <div class="deposit-summary-card">
+                                <span class="summary-label">Ближайшее начисление</span>
+                                <span class="summary-value" id="deposits-next-payout-summary">—</span>
+                                <span class="summary-meta">Следите за пополнениями и капитализацией</span>
+                            </div>
+                        </div>
+
+                        <div class="deposits-content">
+                            <div class="deposits-list">
+                                <div class="deposits-list-header">
+                                    <h3>Активные вклады</h3>
+                                    <button class="btn-secondary" id="open-deposit-btn">
+                                        <i class="fas fa-plus"></i>
+                                        Открыть новый вклад
+                                    </button>
+                                </div>
+                                <div id="deposit-list" class="deposit-cards"></div>
+                            </div>
+
+                            <aside class="deposits-side">
+                                <div class="payouts-card">
+                                    <h4>Ближайшие выплаты</h4>
+                                    <p class="payouts-note">Следующие начисления процентов по вашим вкладам</p>
+                                    <div id="deposit-payouts" class="payouts-list"></div>
+                                </div>
+                                <div class="insights-card">
+                                    <h4>Советы банкира</h4>
+                                    <ul id="deposit-recommendations" class="recommend-list"></ul>
+                                </div>
+                            </aside>
                         </div>
                     </div>
                 </div>
