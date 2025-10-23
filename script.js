@@ -8,9 +8,54 @@ let userData = {
     coffeeCount: 0,
     savingsAmount: 0,
     cashbackEarned: 0,
+    deposits: [
+        {
+            id: 'flex',
+            name: 'Накопительный FLEX',
+            balance: 3200,
+            rate: 7.5,
+            termMonths: 12,
+            monthsPassed: 5,
+            interestAccrued: 132,
+            monthlyTopUp: 200,
+            nextPayoutInDays: 12,
+            nextPayoutAmount: 18.75,
+            capitalisation: true,
+            replenishment: true
+        },
+        {
+            id: 'travel',
+            name: 'Цель: Путешествие',
+            balance: 1850,
+            rate: 8.2,
+            termMonths: 9,
+            monthsPassed: 3,
+            interestAccrued: 79,
+            monthlyTopUp: 150,
+            nextPayoutInDays: 5,
+            nextPayoutAmount: 12.62,
+            capitalisation: true,
+            replenishment: true
+        },
+        {
+            id: 'reserve',
+            name: 'Резервный фонд',
+            balance: 950,
+            rate: 6.0,
+            termMonths: 6,
+            monthsPassed: 4,
+            interestAccrued: 28,
+            monthlyTopUp: 0,
+            nextPayoutInDays: 20,
+            nextPayoutAmount: 4.75,
+            capitalisation: false,
+            replenishment: false
+        }
+    ],
     streak: 0,
     achievements: [],
     cardColor: '#6366f1',
+    theme: 'ocean',
     cardPhoto: null,
     completedTasks: {
         login: true,
@@ -19,6 +64,8 @@ let userData = {
     },
     lastActivityDate: new Date().toDateString()
 };
+
+const availableThemes = ['ocean', 'forest', 'sunset', 'berry'];
 
 // 3D Coffee Animation Variables
 let scene, camera, renderer, coffeeCup, animationId;
@@ -31,6 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
     loadUserData();
     setupEventListeners();
+    applyTheme(userData.theme);
     checkStreak();
     // Инициализируем 3D сцену сразу при загрузке
     initCoffee3D();
@@ -56,7 +104,32 @@ function showMainScreen() {
     updateUserInterface();
 }
 
+function applyTheme(themeName) {
+    if (!availableThemes.includes(themeName)) {
+        themeName = 'ocean';
+    }
+
+    availableThemes.forEach(name => {
+        document.body.classList.toggle(`theme-${name}`, name === themeName);
+    });
+
+    document.querySelectorAll('.theme-option').forEach(option => {
+        const isActive = option.dataset.theme === themeName;
+        option.classList.toggle('active', isActive);
+        option.setAttribute('aria-pressed', isActive);
+    });
+
+    userData.theme = themeName;
+    saveUserData();
+}
+
 function setupEventListeners() {
+    document.querySelectorAll('.theme-option').forEach(option => {
+        option.addEventListener('click', function() {
+            applyTheme(this.dataset.theme);
+        });
+    });
+
     // Выбор категорий
     document.querySelectorAll('.category-card').forEach(card => {
         card.addEventListener('click', function() {
@@ -114,6 +187,28 @@ function setupEventListeners() {
             buyCoffee();
         }, 300);
     });
+
+    const simulateTransactionBtn = document.getElementById('simulate-transaction-btn');
+    if (simulateTransactionBtn) {
+        simulateTransactionBtn.addEventListener('click', function() {
+            this.classList.add('pulse');
+            setTimeout(() => {
+                this.classList.remove('pulse');
+                simulateTransaction();
+            }, 300);
+        });
+    }
+
+    const openDepositBtn = document.getElementById('open-deposit-btn');
+    if (openDepositBtn) {
+        openDepositBtn.addEventListener('click', function() {
+            this.classList.add('pulse');
+            setTimeout(() => {
+                this.classList.remove('pulse');
+                showNotification('Наш менеджер свяжется с вами для открытия нового вклада.', 'info');
+            }, 300);
+        });
+    }
 
     // Кастомизация карты
     document.getElementById('photo-upload').addEventListener('change', handlePhotoUpload);
@@ -214,7 +309,10 @@ function switchTab(tabName) {
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
     });
-    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    const nextNavItem = document.querySelector(`[data-tab="${tabName}"]`);
+    if (nextNavItem) {
+        nextNavItem.classList.add('active');
+    }
     
     // Показываем соответствующий контент
     document.querySelectorAll('.tab-content').forEach(content => {
@@ -225,6 +323,8 @@ function switchTab(tabName) {
     // Обновляем интерфейс для конкретной вкладки
     if (tabName === 'card') {
         updateCardPreview();
+    } else if (tabName === 'deposits') {
+        updateDepositsView();
     }
 }
 
@@ -264,8 +364,189 @@ function updateUserInterface() {
     
     // Обновляем задания
     updateTasksDisplay();
+
+    // Обновляем вкладки с вкладами
+    updateDepositsView();
 }
 
+function formatCurrency(value, fractionDigits = 2) {
+    return Number(value || 0).toLocaleString('ru-RU', {
+        minimumFractionDigits: fractionDigits,
+        maximumFractionDigits: fractionDigits
+    });
+}
+
+function pluralizeDays(days) {
+    const absDays = Math.abs(days);
+    const lastDigit = absDays % 10;
+    const lastTwoDigits = absDays % 100;
+
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+        return `${days} дней`;
+    }
+    if (lastDigit === 1) {
+        return `${days} день`;
+    }
+    if (lastDigit >= 2 && lastDigit <= 4) {
+        return `${days} дня`;
+    }
+    return `${days} дней`;
+}
+
+function formatFutureDate(daysFromNow) {
+    const target = new Date();
+    target.setDate(target.getDate() + daysFromNow);
+    return target.toLocaleDateString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+}
+
+function updateDepositsView() {
+    const totalEl = document.getElementById('deposits-total');
+    if (!totalEl) return;
+
+    const deposits = userData.deposits || [];
+    const totalBalance = deposits.reduce((sum, deposit) => sum + deposit.balance, 0);
+    const monthlyIncome = deposits.reduce((sum, deposit) => {
+        return sum + (deposit.balance * (deposit.rate / 100) / 12);
+    }, 0);
+    const accruedInterest = deposits.reduce((sum, deposit) => sum + deposit.interestAccrued, 0);
+    const averageRate = deposits.length
+        ? deposits.reduce((sum, deposit) => sum + deposit.rate, 0) / deposits.length
+        : 0;
+
+    const sortedByPayout = [...deposits].sort((a, b) => a.nextPayoutInDays - b.nextPayoutInDays);
+    const nearestPayout = sortedByPayout[0];
+
+    totalEl.textContent = `${formatCurrency(totalBalance)} BYN`;
+    const monthlyIncomeEl = document.getElementById('deposits-monthly-income');
+    if (monthlyIncomeEl) {
+        monthlyIncomeEl.textContent = `${formatCurrency(monthlyIncome)} BYN`;
+    }
+    const averageRateEl = document.getElementById('deposits-average-rate');
+    if (averageRateEl) {
+        averageRateEl.textContent = `${averageRate.toFixed(1)}%`;
+    }
+    const accruedInterestEl = document.getElementById('deposits-interest-earned');
+    if (accruedInterestEl) {
+        accruedInterestEl.textContent = `${formatCurrency(accruedInterest)} BYN`;
+    }
+    const nextPayoutSummaryEl = document.getElementById('deposits-next-payout-summary');
+    if (nextPayoutSummaryEl && nearestPayout) {
+        nextPayoutSummaryEl.textContent = `${formatCurrency(nearestPayout.nextPayoutAmount)} BYN • ${nearestPayout.nextPayoutInDays === 0 ? 'сегодня' : pluralizeDays(nearestPayout.nextPayoutInDays)}`;
+    }
+
+    const listEl = document.getElementById('deposit-list');
+    if (listEl) {
+        listEl.innerHTML = '';
+        deposits.forEach(deposit => {
+            const progress = deposit.termMonths
+                ? Math.min(100, Math.round((deposit.monthsPassed / deposit.termMonths) * 100))
+                : 0;
+            const monthlyAccrual = deposit.balance * (deposit.rate / 100) / 12;
+            const card = document.createElement('div');
+            card.className = 'deposit-card';
+            card.innerHTML = `
+                <div class="deposit-card__header">
+                    <div>
+                        <h4 class="deposit-name">${deposit.name}</h4>
+                        <p class="deposit-meta">${deposit.capitalisation ? 'Капитализация' : 'Без капитализации'} · ${deposit.replenishment ? 'Пополнение доступно' : 'Без пополнения'}</p>
+                    </div>
+                    <div class="deposit-rate">${deposit.rate.toFixed(1)}%</div>
+                </div>
+                <div class="deposit-card__body">
+                    <div class="deposit-amount">
+                        <span class="label">Сумма на счете</span>
+                        <span class="value">${formatCurrency(deposit.balance)} BYN</span>
+                    </div>
+                    <div class="deposit-stats">
+                        <div>
+                            <span class="label">Начислено процентов</span>
+                            <span class="value">${formatCurrency(deposit.interestAccrued)} BYN</span>
+                        </div>
+                        <div>
+                            <span class="label">Месячное начисление</span>
+                            <span class="value">~${formatCurrency(monthlyAccrual)} BYN</span>
+                        </div>
+                        <div>
+                            <span class="label">Пополнение</span>
+                            <span class="value">${deposit.monthlyTopUp ? `${formatCurrency(deposit.monthlyTopUp)} BYN/мес` : '—'}</span>
+                        </div>
+                    </div>
+                    <div class="deposit-progress">
+                        <div class="deposit-progress-bar">
+                            <div class="deposit-progress-fill" style="width: ${progress}%"></div>
+                        </div>
+                        <div class="deposit-progress-info">
+                            <span>${deposit.monthsPassed} из ${deposit.termMonths} мес.</span>
+                            <span>${progress}%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="deposit-card__footer">
+                    <div>
+                        <span class="label">Следующее начисление</span>
+                        <span class="value">${deposit.nextPayoutInDays === 0 ? 'Сегодня' : `Через ${pluralizeDays(deposit.nextPayoutInDays)}`}</span>
+                    </div>
+                    <div>
+                        <span class="label">Сумма начисления</span>
+                        <span class="value">${formatCurrency(deposit.nextPayoutAmount)} BYN</span>
+                    </div>
+                    <div>
+                        <span class="label">Дата</span>
+                        <span class="value">${formatFutureDate(deposit.nextPayoutInDays)}</span>
+                    </div>
+                </div>
+            `;
+            listEl.appendChild(card);
+        });
+    }
+
+    const payoutsEl = document.getElementById('deposit-payouts');
+    if (payoutsEl) {
+        payoutsEl.innerHTML = '';
+        sortedByPayout.forEach(deposit => {
+            const row = document.createElement('div');
+            row.className = 'payout-item';
+            row.innerHTML = `
+                <div>
+                    <span class="payout-name">${deposit.name}</span>
+                    <span class="payout-date">${formatFutureDate(deposit.nextPayoutInDays)}</span>
+                </div>
+                <div class="payout-amount">${formatCurrency(deposit.nextPayoutAmount)} BYN</div>
+            `;
+            payoutsEl.appendChild(row);
+        });
+    }
+
+    const recommendationsEl = document.getElementById('deposit-recommendations');
+    if (recommendationsEl) {
+        recommendationsEl.innerHTML = '';
+        if (deposits.length) {
+            const slowest = deposits.reduce((acc, deposit) => {
+                const accProgress = acc.termMonths ? acc.monthsPassed / acc.termMonths : 0;
+                const depProgress = deposit.termMonths ? deposit.monthsPassed / deposit.termMonths : 0;
+                return depProgress < accProgress ? deposit : acc;
+            }, deposits[0]);
+            const highestRate = deposits.reduce((acc, deposit) => deposit.rate > acc.rate ? deposit : acc, deposits[0]);
+            const soonest = nearestPayout || deposits[0];
+
+            const recommendations = [
+                `Пополните вклад «${slowest.name}» на 200 BYN — вы ускорите накопление и приблизите цель по нему.`,
+                `Держите основную сумму на «${highestRate.name}»: ставка ${highestRate.rate.toFixed(1)}% обеспечивает максимальный доход.`,
+                `Через ${soonest.nextPayoutInDays === 0 ? 'сегодня' : pluralizeDays(soonest.nextPayoutInDays)} (${formatFutureDate(soonest.nextPayoutInDays)}) получите ${formatCurrency(soonest.nextPayoutAmount)} BYN по вкладу «${soonest.name}».`
+            ];
+
+            recommendations.forEach(text => {
+                const li = document.createElement('li');
+                li.textContent = text;
+                recommendationsEl.appendChild(li);
+            });
+        }
+    }
+}
 function buyCoffee() {
     const coffeePrice = 3;
     
@@ -285,6 +566,7 @@ function buyCoffee() {
     
     // Обновляем задания
     userData.completedTasks.coffee = true;
+    updateTasksDisplay();
     
     // Показываем 3D анимацию
     showCoffee3DAnimation();
@@ -992,13 +1274,12 @@ function updateTasksDisplay() {
     const tasks = document.querySelectorAll('.task-item');
     tasks.forEach(task => {
         const taskType = task.dataset.task;
-        const statusIcon = task.querySelector('.task-status i');
-        
-        if (userData.completedTasks[taskType]) {
-            statusIcon.className = 'fas fa-check-circle completed';
-        } else {
-            statusIcon.className = 'fas fa-circle not-completed';
-        }
+        const checkbox = task.querySelector('.task-checkbox');
+        if (!checkbox) return;
+
+        const isCompleted = Boolean(userData.completedTasks[taskType]);
+        checkbox.classList.toggle('checked', isCompleted);
+        checkbox.textContent = isCompleted ? '✓' : '';
     });
 }
 
@@ -1105,13 +1386,18 @@ function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
     notification.textContent = message;
+    const computedStyles = getComputedStyle(document.body);
+    const accentColor = computedStyles.getPropertyValue('--accent').trim() || '#6366f1';
+    const successColor = computedStyles.getPropertyValue('--success').trim() || '#10b981';
+    const dangerColor = computedStyles.getPropertyValue('--danger').trim() || '#ef4444';
+    const backgroundColor = type === 'success' ? successColor : type === 'error' ? dangerColor : accentColor;
     
     // Стили для уведомления
     notification.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
-        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#6366f1'};
+        background: ${backgroundColor};
         color: white;
         padding: 16px 20px;
         border-radius: 8px;
@@ -1198,17 +1484,3 @@ setInterval(() => {
     }
 }, 60000); // Проверяем каждую минуту
 
-// Добавляем кнопку для симуляции транзакции (для демонстрации)
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(() => {
-        const dashboardTab = document.getElementById('dashboard-tab');
-        if (dashboardTab) {
-            const simulateBtn = document.createElement('button');
-            simulateBtn.textContent = 'Симулировать транзакцию';
-            simulateBtn.className = 'btn-primary';
-            simulateBtn.style.marginTop = '20px';
-            simulateBtn.onclick = simulateTransaction;
-            dashboardTab.appendChild(simulateBtn);
-        }
-    }, 1000);
-});
